@@ -146,7 +146,9 @@
         controls
         disablePictureInPicture
         class="h-full object-contain"
+        style:view-transition-name={assetViewerManager.transitionName}
         {...useSwipe(onSwipe)}
+        onloadedmetadata={() => assetViewerManager.emit('ViewerOpenTransitionReady')}
         oncanplay={(e) => handleCanPlay(e.currentTarget)}
         onended={onVideoEnded}
         onvolumechange={(e) => ($videoViewerMuted = e.currentTarget.muted)}
