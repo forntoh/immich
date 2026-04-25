@@ -11,6 +11,7 @@
     videoViewerVolume,
   } from '$lib/stores/preferences.store';
   import { getAssetMediaUrl, getAssetPlaybackUrl } from '$lib/utils';
+  import type { Size } from '$lib/utils/container-utils';
   import { AssetMediaSize } from '@immich/sdk';
   import { LoadingSpinner } from '@immich/ui';
   import { onDestroy, onMount } from 'svelte';
@@ -19,6 +20,7 @@
 
   interface Props {
     assetId: string;
+    assetSize: Size;
     loopVideo: boolean;
     cacheKey: string | null;
     playOriginalVideo: boolean;
@@ -31,6 +33,7 @@
 
   let {
     assetId,
+    assetSize,
     loopVideo,
     cacheKey,
     playOriginalVideo,
@@ -115,9 +118,40 @@
   let containerHeight = $state(0);
 
   $effect(() => {
-    if (assetViewerManager.isFaceEditMode) {
-      videoPlayer?.pause();
+    if (!assetViewerManager.isFaceEditMode || !videoPlayer) {
+      return;
     }
+    videoPlayer.pause();
+
+    const { videoWidth, videoHeight } = videoPlayer;
+    if (videoWidth === 0 || videoHeight === 0) {
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return;
+    }
+
+    context.drawImage(videoPlayer, 0, 0);
+    const dataUrl = canvas.toDataURL('image/png');
+    canvas.width = 0;
+
+    const img = new Image();
+    const onLoad = () => {
+      assetViewerManager.imgRef = img;
+    };
+    img.addEventListener('load', onLoad);
+    img.src = dataUrl;
+
+    return () => {
+      img.removeEventListener('load', onLoad);
+      img.src = '';
+      assetViewerManager.imgRef = undefined;
+    };
   });
 </script>
 
@@ -173,7 +207,7 @@
       {/if}
 
       {#if assetViewerManager.isFaceEditMode}
-        <FaceEditor htmlElement={videoPlayer} {containerWidth} {containerHeight} {assetId} />
+        <FaceEditor {assetSize} containerSize={{ width: containerWidth, height: containerHeight }} {assetId} />
       {/if}
     {/if}
   </div>

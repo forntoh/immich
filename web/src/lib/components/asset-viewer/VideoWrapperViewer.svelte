@@ -42,6 +42,7 @@
     {loopVideo}
     {cacheKey}
     assetId={effectiveAssetId}
+    assetSize={{ width: asset.width ?? 0, height: asset.height ?? 0 }}
     {playOriginalVideo}
     {onPreviousAsset}
     {onNextAsset}
